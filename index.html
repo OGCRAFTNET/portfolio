@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SimFlix · OGCRAFTNET · Portfolio</title>
+  <meta name="description" content="GLSL shaders (OptiFine/Sodium), Minecraft mods & plugins, TrueLightFX. Partnerships & commissions welcome."/>
+  <meta name="theme-color" content="#000000"/>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0a0b0f; --bg2:#0d1117; --fg:#dbe6ff; --muted:#9fb0c8;
+      --accent:#7aa2ff; --accent2:#22d3ee; --violet:#a78bfa;
+      --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.10);
+      --shadow:0 24px 70px rgba(0,0,0,.55);
+      --radius:16px; --radius-sm:12px; --blur:16px;
+      --grad:linear-gradient(140deg,#7aa2ff40,#22d3ee40 60%,#a78bfa40);
+      --motion: 220ms cubic-bezier(.22,.8,.2,1);
+    }
+    html.oled{ --bg:#000; --bg2:#020202; --fg:#eaf2ff; --muted:#93a0b6; --glass:rgba(255,255,255,.04); --stroke:rgba(255,255,255,.12); }
+
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:var(--fg);
+      background:
+              radial-gradient(1000px 800px at 10% -10%, #13213a 0%, transparent 60%),
+              radial-gradient(900px 700px at 110% 10%, #0b3b4b 0%, transparent 55%),
+              var(--bg);
+      line-height:1.6; overflow-x:hidden;
+    }
+    h1,h2,h3{ font-family:"Press Start 2P", "JetBrains Mono", monospace; letter-spacing:0; }
+    a{color:var(--fg); text-decoration:none}
+
+    .nav{
+      position:fixed; inset:0 0 auto 0; height:64px; z-index:80;
+      display:flex; align-items:center;
+      background:linear-gradient(180deg, rgba(10,11,15,.65), rgba(10,11,15,.2));
+      border-bottom:1px solid var(--stroke);
+      backdrop-filter: blur(var(--blur)) saturate(160%) contrast(105%);
+      -webkit-backdrop-filter: blur(var(--blur)) saturate(160%) contrast(105%);
+      transform:translateY(0); transition:transform var(--motion);
+      box-shadow:0 8px 30px rgba(0,0,0,.35);
+      will-change: transform;
+    }
+    .nav.hidden{ transform:translateY(-100%); }
+    .nav.reveal{ transform:translateY(0); }
+
+    .nav__wrap{max-width:1150px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;width:100%}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand__logo{width:36px;height:36px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:800;color:#0a0b0f;box-shadow:inset 0 0 0 1px var(--stroke)}
+    .brand__text{font-weight:800;letter-spacing:.2px}
+    .menu{display:flex;gap:18px;align-items:center}
+    .menu a{opacity:.88;position:relative;transition:opacity var(--motion), transform var(--motion)}
+    .menu a:hover{opacity:1; transform:translateY(-1px)}
+    .menu a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width var(--motion)}
+    .menu a:hover::after{width:100%}
+
+    .oled-switch{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
+      border-radius:999px; border:2px solid var(--stroke);
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      box-shadow:var(--shadow); cursor:pointer; transition:transform var(--motion), box-shadow var(--motion), background var(--motion);
+    }
+    .oled-switch:hover{ transform:translateY(-2px); box-shadow:0 18px 38px rgba(0,0,0,.45) }
+    .oled-dot{
+      width:18px;height:18px;border-radius:50%; background:radial-gradient(circle at 35% 35%, #fff, #ddd 35%, #999 60%, #000 61%);
+      outline:1px solid var(--stroke);
+    }
+    .oled-label{ font-weight:600 }
+    .oled-label.oled-on{ color:var(--accent2) }
+
+    .hero{position:relative;display:grid;place-items:center;padding:120px 20px 90px;isolation:isolate}
+    .hero__content{max-width:1150px;width:100%;display:grid;gap:18px;transform:translateZ(0)}
+    .hero__badge{display:inline-block;align-self:start;font-size:.9rem;color:#cfe3ff;background:linear-gradient(180deg,#13213a,#0f172a);border:1px solid #2b3b64;border-radius:999px;padding:8px 12px}
+    .hero__title{font-size:clamp(28px,3.8vw,44px);line-height:1.25;margin:0;text-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .hero__subtitle{font-family:"JetBrains Mono", monospace;color:var(--muted);max-width:860px;margin:6px 0 2px}
+    .hero__cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;border:1px solid var(--stroke);
+      background:var(--glass);backdrop-filter:saturate(150%) blur(var(--blur));box-shadow:var(--shadow);
+      transition:transform var(--motion), box-shadow var(--motion), background var(--motion);
+    }
+    .btn:hover{transform:translateY(-2px) scale(1.01); box-shadow:0 16px 46px rgba(0,0,0,.45)}
+    .btn--primary{background:linear-gradient(180deg,#7aa2ff40,#7aa2ff20);border-color:#7aa2ff50}
+    .btn--ghost{background:transparent;border-color:var(--stroke)}
+    .hero__social{display:flex;gap:10px;align-items:center;color:var(--muted)}
+    .parallax{position:absolute;inset:0;z-index:-1;pointer-events:none}
+    .blob{position:absolute;filter:blur(40px) saturate(160%);opacity:.55;border-radius:50%;mix-blend:screen;animation:float 14s ease-in-out infinite}
+    .b1{width:36vw;height:36vw;left:-10vw;top:-8vh;background:radial-gradient(closest-side,#7aa2ff66,#0000)}
+    .b2{width:34vw;height:34vw;right:-8vw;top:0;background:radial-gradient(closest-side,#22d3ee66,#0000);animation-duration:18s}
+    .b3{width:40vw;height:40vw;left:20vw;bottom:-12vh;background:radial-gradient(closest-side,#a78bfa66,#0000);animation-duration:22s}
+    @keyframes float{50%{transform:translateY(-20px) translateX(12px)}}
+
+    .section{padding:72px 20px}
+    .section__head{max-width:1150px;margin:0 auto 22px}
+    .section__head h2{margin:0 0 6px;font-size:1.3rem}
+    .glass{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03)); border:1px solid var(--stroke); border-radius:var(--radius); backdrop-filter: blur(var(--blur)) saturate(150%); box-shadow:var(--shadow)}
+
+    .about__grid{max-width:1150px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
+    .about__item{padding:20px;border-radius:var(--radius-sm);border:1px solid #ffffff10;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent); transition: transform var(--motion)}
+    .about__item:hover{ transform: translateY(-3px) }
+    .checklist{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:10px}
+    .checklist li{position:relative;padding-left:28px}
+    .checklist li:before{content:"✓";position:absolute;left:0;top:0;color:var(--accent2);opacity:.9}
+
+    .skills{max-width:1150px;margin:0 auto;padding:16px;display:flex;gap:10px;flex-wrap:wrap}
+    .chip{padding:10px 14px;border-radius:999px;border:1px solid var(--stroke);background:radial-gradient(90px 60px at 20% 10%, #7aa2ff30, transparent 70%);font-size:.92rem;transition:transform var(--motion)}
+    .chip:hover{transform:translateY(-2px)}
+    .chip::after{content:""; display:block; height:2px; margin-top:6px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); transform:translateX(-100%); animation:shimmer 2.2s infinite}
+    @keyframes shimmer{50%{transform:translateX(100%)}}
+
+    .skills-wrap{max-width:1150px;margin:0 auto;display:grid;gap:14px}
+    .skills-controls{
+      display:flex;flex-wrap:wrap;gap:10px;padding:10px;border-radius:12px;border:1px solid var(--stroke);
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+      align-items:center;justify-content:flex-start
+    }
+    .filter{
+      padding:10px 14px;border-radius:999px;border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04); color:var(--fg); cursor:pointer;
+      transition:transform var(--motion), background var(--motion), border-color var(--motion), color var(--motion)
+    }
+    .filter:hover{ transform:translateY(-2px) }
+    .filter.active{
+      background:linear-gradient(180deg,#7aa2ff3a,#22d3ee3a); border-color:#7aa2ff66; color:#eaf2ff
+    }
+
+    .skills-grid{
+      display:grid;gap:14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .skill-card{
+      position:relative; overflow:hidden; border-radius:14px; padding:14px; isolation:isolate;
+      background:
+              linear-gradient(var(--bg2), var(--bg2)) padding-box,
+              linear-gradient(140deg, #7aa2ff66, #22d3ee66 60%, #a78bfa66) border-box;
+      border:1px solid transparent;
+      box-shadow:0 10px 28px rgba(0,0,0,.35);
+      transform-style:preserve-3d;
+      transition:transform var(--motion), box-shadow var(--motion), background var(--motion), border-color var(--motion), opacity var(--motion)
+    }
+    .skill-card:hover{ transform:perspective(900px) rotateX(2deg) rotateY(2deg) translateY(-2px); box-shadow:0 18px 46px rgba(0,0,0,.45) }
+    .skill-card::after{
+      content:""; position:absolute; inset:0;
+      background:radial-gradient(120px 120px at var(--x,50%) var(--y,50%), rgba(255,255,255,.10), transparent 60%);
+      opacity:0; transition:opacity .22s;
+      pointer-events:none
+    }
+    .skill-card:hover::after{ opacity:1 }
+
+    .skill-top{display:flex;align-items:center;gap:10px}
+    .skill-badge{
+      width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#0b1120;
+      background:conic-gradient(from 0turn, #7aa2ff, #22d3ee, #a78bfa, #7aa2ff);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.18);
+    }
+    .skill-title{font-weight:800;letter-spacing:.2px}
+    .skill-sub{color:var(--muted);font-size:.88rem}
+
+    .meter{margin-top:10px}
+    .meter__bg{
+      height:8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);overflow:hidden
+    }
+    .meter__bar{
+      --c1:#7aa2ff; --c2:#22d3ee;
+      height:100%; width:calc(var(--level, .75) * 100%); border-radius:999px;
+      background:linear-gradient(90deg, var(--c1), var(--c2));
+      box-shadow:0 0 10px rgba(122,162,255,.35)
+    }
+
+    .skill-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .skill-tag{
+      padding:6px 10px;border-radius:999px;border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05); color:var(--muted); font-size:.86rem;
+      transition:transform var(--motion)
+    }
+    .skill-tag:hover{ transform:translateY(-2px) }
+
+    .skill-tip{
+      position:absolute; right:10px; bottom:10px; font-size:.8rem; color:var(--muted);
+      opacity:.0; transform:translateY(6px); transition:opacity var(--motion), transform var(--motion)
+    }
+    .skill-card:hover .skill-tip{ opacity:.9; transform:none }
+
+    .is-hidden{opacity:0; pointer-events:none; transform:scale(.96)}
+    .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease, transform .6s ease}
+    .reveal.show{opacity:1;transform:none}
+
+    .projects{max-width:1150px;margin:0 auto;display:grid;gap:16px}
+    .card{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:16px;position:relative;overflow:hidden;transform-style:preserve-3d;transition:transform var(--motion)}
+    .projects a.card{cursor:pointer; text-decoration:none; color:inherit}
+    .card:hover{ transform:perspective(800px) rotateX(2deg) rotateY(2deg) }
+    .thumb{width:100%;height:100%;min-height:110px;border-radius:12px;border:1px solid var(--stroke);background:linear-gradient(135deg,#7aa2ff33,#22d3ee33);display:grid;place-items:center;color:#0b1120;font-weight:800}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:.92rem}
+    .pill{padding:6px 10px;border:1px solid var(--stroke);border-radius:999px;background:rgba(255,255,255,.05);transition:transform var(--motion)}
+    .pill:hover{transform:translateY(-2px)}
+    .ripple{position:absolute;inset:0;background:radial-gradient(140px 140px at var(--x,50%) var(--y,50%), rgba(255,255,255,.09), transparent 60%);opacity:0;transition:opacity .25s}
+    .card:hover .ripple{opacity:1}
+
+    .links{max-width:1150px;margin:0 auto;padding:16px;display:flex;gap:10px;flex-wrap:wrap}
+    .link{padding:12px 16px;border:1px solid var(--stroke);border-radius:12px;background:rgba(255,255,255,.04);position:relative;overflow:hidden;transition:transform var(--motion)}
+    .link:hover{transform:translateY(-2px)}
+    .link::after{content:"";position:absolute;inset:0;background:radial-gradient(70px 70px at var(--x,50%) var(--y,50%), rgba(255,255,255,.08), transparent 60%);opacity:0;transition:opacity .2s}
+    .link:hover::after{opacity:1}
+
+    .faq{max-width:1150px;margin:0 auto;padding:16px;display:grid;gap:10px}
+    .qa{border:1px solid var(--stroke);border-radius:12px;background:rgba(255,255,255,.04);overflow:hidden}
+    .q{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+    .a{padding:0 16px;max-height:0;overflow:hidden;transition:max-height var(--motion), padding var(--motion); color:var(--muted)}
+    .qa.open .a{padding:12px 16px 16px;max-height:220px}
+
+    .contact{max-width:1150px;margin:0 auto;padding:16px;display:grid;gap:14px}
+    .contact form{display:grid;gap:12px}
+    .input{padding:12px 14px;border-radius:12px;border:1px solid var(--stroke);background:rgba(255,255,255,.04);color:var(--fg);transition:box-shadow var(--motion), transform var(--motion)}
+    .input:focus{outline:none; box-shadow:0 0 0 3px #7aa2ff33; transform:translateY(-1px)}
+
+    .footer{padding:44px 20px;color:var(--muted);display:grid;place-items:center}
+
+    @media (max-width:900px){
+      .about__grid{grid-template-columns:1fr}
+      .card{grid-template-columns:1fr}
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .skill-card, .card, .link { transition:none !important }
+      .ripple, .skill-card::after { display:none }
+    }
+  </style>
+</head>
+<body>
+<div class="parallax" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+
+<header class="nav reveal" id="nav">
+  <div class="nav__wrap">
+    <a class="brand" href="#"><span class="brand__logo">SL</span><span class="brand__text">SimFlix</span></a>
+    <nav class="menu">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#faq">FAQ</a>
+      <a href="#links">Links</a>
+      <a href="#contact" class="btn btn--sm btn--primary">Contact</a>
+    </nav>
+    <button class="oled-switch" id="oledToggle" aria-label="Toggle OLED mode">
+      <span class="oled-dot"></span>
+      <span class="oled-label">OLED</span>
+    </button>
+  </div>
+</header>
+
+<main style="padding-top:64px">
+  <section class="hero" id="home">
+    <div class="hero__content reveal" id="heroContent">
+      <div class="hero__badge">Open for partnerships & commissions</div>
+      <h1 class="hero__title">GLSL shaders, Minecraft mods & plugins</h1>
+      <p class="hero__subtitle">Creating OptiFine & Sodium compatible shaders, performance‑minded clients, and tools for servers/creators. Let’s build experiences players will love.</p>
+      <div class="hero__cta">
+        <a href="#projects" class="btn btn--primary">See projects</a>
+        <a href="#contact" class="btn btn--ghost">Get in touch</a>
+      </div>
+      <div class="hero__social">
+        <a href="https://discord.com/users/@ogcraftnet" target="_blank" rel="noopener">Discord: @ogcraftnet</a>
+        <span>•</span>
+        <a href="mailto:contact@ogcraftnet.vip">contact@ogcraftnet.vip</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section">
+    <div class="section__head reveal">
+      <h2>About</h2>
+      <p>Simon, aka SimFlix — developer focused on shader pipelines, clients, and plugins for Minecraft. Collaborating with creators, studios, and hosting teams worldwide.</p>
+    </div>
+    <div class="about__grid glass reveal">
+      <div class="about__item">
+        <h3>Why partner</h3>
+        <ul class="checklist">
+          <li>Deep OptiFine/Sodium compatibility</li>
+          <li>Clean APIs, docs, and releases</li>
+          <li>Cinematic look with high FPS</li>
+          <li>Fast iteration and CI</li>
+        </ul>
+      </div>
+      <div class="about__item">
+        <h3>What you get</h3>
+        <ul class="checklist">
+          <li>Roadmaps and milestones</li>
+          <li>Fabric/Paper testing</li>
+          <li>Branding and changelogs</li>
+          <li>Post‑launch support</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" class="section">
+    <div class="section__head reveal">
+      <h2>Skills</h2>
+      <p>Shader pipelines, Minecraft internals, and hosting infra for modern content delivery.</p>
+    </div>
+
+    <div class="skills-wrap">
+      <div class="skills-controls glass reveal" role="toolbar" aria-label="Skill filters">
+        <button class="filter active" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter" data-filter="shader" aria-pressed="false">Shader</button>
+        <button class="filter" data-filter="minecraft" aria-pressed="false">Minecraft</button>
+        <button class="filter" data-filter="lang" aria-pressed="false">Languages</button>
+      </div>
+
+      <div class="skills-grid reveal" id="skillsGrid" role="list">
+        <article class="skill-card hoverable" role="listitem" data-cat="shader minecraft" style="--level:.95">
+          <div class="skill-top">
+            <div class="skill-badge">GL</div>
+            <div>
+              <div class="skill-title">GLSL Shader</div>
+              <div class="skill-sub">Rendering & PostFX</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Lighting</span>
+            <span class="skill-tag">Color Grading</span>
+            <span class="skill-tag">PBR</span>
+          </div>
+          <div class="skill-tip">Noice</div>
+        </article>
+
+
+
+
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.9">
+          <div class="skill-top">
+            <div class="skill-badge">MOD</div>
+            <div>
+              <div class="skill-title">Mods</div>
+              <div class="skill-sub">Fabric runtime</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Events</span>
+            <span class="skill-tag">Mixins</span>
+          </div>
+          <div class="skill-tip">Client/Server</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.86">
+          <div class="skill-top">
+            <div class="skill-badge">PL</div>
+            <div>
+              <div class="skill-title">Plugins</div>
+              <div class="skill-sub">Paper API</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Commands</span>
+            <span class="skill-tag">Hooks</span>
+          </div>
+          <div class="skill-tip">Servers</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.84">
+          <div class="skill-top">
+            <div class="skill-badge">CL</div>
+            <div>
+              <div class="skill-title">Client Dev</div>
+              <div class="skill-sub">UX & Perf</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">UI</span>
+            <span class="skill-tag">Telemetry</span>
+          </div>
+          <div class="skill-tip">Responsive</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.82">
+          <div class="skill-top">
+            <div class="skill-badge">PR</div>
+            <div>
+              <div class="skill-title">Profiling</div>
+              <div class="skill-sub">JFR/VisualVM</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Hotpaths</span>
+            <span class="skill-tag">Memory</span>
+          </div>
+          <div class="skill-tip">Optimize</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.86">
+          <div class="skill-top">
+            <div class="skill-badge">FB</div>
+            <div>
+              <div class="skill-title">Fabric</div>
+              <div class="skill-sub">Loader & API</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Mixins</span>
+            <span class="skill-tag">Config</span>
+          </div>
+          <div class="skill-tip">Mods</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="minecraft" style="--level:.82">
+          <div class="skill-top">
+            <div class="skill-badge">PW</div>
+            <div>
+              <div class="skill-title">Paper</div>
+              <div class="skill-sub">Server API</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Events</span>
+            <span class="skill-tag">Schedulers</span>
+          </div>
+          <div class="skill-tip">Plugins</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="lang" style="--level:.9">
+          <div class="skill-top">
+            <div class="skill-badge">JV</div>
+            <div>
+              <div class="skill-title">Java</div>
+              <div class="skill-sub">Core & JVM</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Streams</span>
+            <span class="skill-tag">Concurrency</span>
+          </div>
+          <div class="skill-tip">JDK</div>
+        </article>
+
+        <article class="skill-card hoverable" role="listitem" data-cat="lang" style="--level:.86">
+          <div class="skill-top">
+            <div class="skill-badge">KT</div>
+            <div>
+              <div class="skill-title">Kotlin</div>
+              <div class="skill-sub">JVM & DSL</div>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter__bg"><div class="meter__bar"></div></div>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Coroutines</span>
+            <span class="skill-tag">Exts</span>
+          </div>
+          <div class="skill-tip">Idiomatic</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" class="section">
+    <div class="section__head reveal">
+      <h2>Projects</h2>
+      <p>Released and coming soon — focused on visuals, performance, and creator tooling.</p>
+    </div>
+    <div class="projects">
+      <a class="glass card reveal hoverable" href="https://truelightfx.ogcraftnet.vip" target="_blank" rel="noopener" aria-label="Open TrueLightFX website">
+        <div class="thumb">TLFX</div>
+        <div>
+          <h3>TrueLightFX</h3>
+          <p>Cinematic lighting, color grading, and smart performance scaling.</p>
+          <div class="meta">
+            <span class="pill">GLSL</span>
+            <span class="pill">OptiFine/Sodium</span>
+            <span class="pill">Website</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+
+      <a class="glass card reveal hoverable" href="https://www.curseforge.com/minecraft/shaders/truelightfx-lite-low-end" target="_blank" rel="noopener" aria-label="Open TrueLightFX Lite details">
+        <div class="thumb">TLFX L</div>
+        <div>
+          <h3>TrueLightFX Lite / Low‑End</h3>
+          <p>Optimized for budget GPUs while keeping the TLFX look.</p>
+          <div class="meta">
+            <span class="pill">Performance</span>
+            <span class="pill">Low‑End</span>
+            <span class="pill">Details</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+
+      <a class="glass card reveal hoverable" href="https://host.ogcraftnet.vip" target="_blank" rel="noopener" aria-label="Open OGCRAFTNETWORK site">
+        <div class="thumb">OGN</div>
+        <div>
+          <h3>OGCRAFTNETWORK</h3>
+          <p>Hosting for creators and servers — Coming Soon. Early partners welcome.</p>
+          <div class="meta">
+            <span class="pill">Infra</span>
+            <span class="pill">DevOps</span>
+            <span class="pill">Coming Soon</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+
+      <a class="glass card reveal hoverable" href="https://client.ogcraftnet.vip" target="_blank" rel="noopener" aria-label="Open Arctis Client site">
+        <div class="thumb">Arctis</div>
+        <div>
+          <h3>Arctis Client</h3>
+          <p>Performance‑focused client with visuals‑first UX — Coming Soon.</p>
+          <div class="meta">
+            <span class="pill">Client</span>
+            <span class="pill">Fabric</span>
+            <span class="pill">Coming Soon</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+
+      <a class="glass card reveal hoverable" href="https://curseforge.ogcraftnet.vip" target="_blank" rel="noopener" aria-label="Open CurseForge hub">
+        <div class="thumb">CF</div>
+        <div>
+          <h3>CurseForge Hub</h3>
+          <p>Central releases, changelogs, and downloads.</p>
+          <div class="meta">
+            <span class="pill">Hub</span>
+            <span class="pill">Releases</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+
+      <a class="glass card reveal hoverable" href="https://discord.ogcraftnet.vip" target="_blank" rel="noopener" aria-label="Open Discord">
+        <div class="thumb">Discord</div>
+        <div>
+          <h3>Community & Support</h3>
+          <p>Join for updates, previews, and support across projects.</p>
+          <div class="meta">
+            <span class="pill">Community</span>
+            <span class="pill">Support</span>
+          </div>
+        </div>
+        <div class="ripple"></div>
+      </a>
+    </div>
+  </section>
+
+  <section id="faq" class="section">
+    <div class="section__head reveal">
+      <h2>FAQ</h2>
+      <p>Common questions about collaboration, licenses, and tech stack.</p>
+    </div>
+    <div class="faq glass reveal">
+      <div class="qa">
+        <div class="q">Do you partner with servers/creators? <span>+</span></div>
+        <div class="a">Yes. Share your use‑case, reach, and timeline — Discord DM is ideal.</div>
+      </div>
+      <div class="qa">
+        <div class="q">Which loaders/versions do you support? <span>+</span></div>
+        <div class="a">Fabric, and Paper, with focus on current LTS/major Minecraft versions.</div>
+      </div>
+      <div class="qa">
+        <div class="q">How does a commission work? <span>+</span></div>
+        <div class="a">Kickoff, scope/milestones, prototyping, tests, release assets, then support/hotfix window.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="links" class="section">
+    <div class="section__head reveal">
+      <h2>Links</h2>
+      <p>Quick access to project sites and contacts.</p>
+    </div>
+    <div class="links glass reveal">
+      <a class="link" href="https://truelightfx.ogcraftnet.vip" target="_blank" rel="noopener">truelightfx.ogcraftnet.vip</a>
+      <a class="link" href="https://client.ogcraftnet.vip" target="_blank" rel="noopener">client.ogcraftnet.vip</a>
+      <a class="link" href="https://host.ogcraftnet.vip" target="_blank" rel="noopener">host.ogcraftnet.vip</a>
+      <a class="link" href="https://curseforge.ogcraftnet.vip" target="_blank" rel="noopener">curseforge.ogcraftnet.vip</a>
+      <a class="link" href="https://discord.ogcraftnet.vip" target="_blank" rel="noopener">discord.ogcraftnet.vip</a>
+    </div>
+  </section>
+
+  <section id="contact" class="section">
+    <div class="section__head reveal">
+      <h2>Contact</h2>
+      <p>DM on Discord or email — fast responses.</p>
+    </div>
+    <div class="contact glass reveal">
+      <div class="meta">Discord: @ogcraftnet · Email: contact@ogcraftnet.vip</div>
+      <form onsubmit="sendMessage(event)">
+        <input class="input" id="name" name="name" placeholder="Name" required />
+        <input class="input" id="email" name="email" type="email" placeholder="Email" required />
+        <textarea class="input" id="message" name="message" rows="5" placeholder="How can we work together?" required></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn--primary" type="submit">Send</button>
+        </div>
+        <div id="status" class="meta" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div>© <span id="year"></span> SimFlix · OGCRAFTNET</div>
+</footer>
+
+<script>
+  const toggle = document.getElementById('oledToggle');
+  if(localStorage.getItem('mode')==='oled'){
+    document.documentElement.classList.add('oled');
+    toggle?.querySelector('.oled-label')?.classList.add('oled-on');
+  }
+  toggle?.addEventListener('click', ()=>{
+    const on = document.documentElement.classList.toggle('oled');
+    toggle.querySelector('.oled-label')?.classList.toggle('oled-on', on);
+    localStorage.setItem('mode', on?'oled':'dark');
+    toggle.animate([{transform:'scale(1)'},{transform:'scale(1.05)'},{transform:'scale(1)'}],{duration:180, easing:'ease-out'});
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const io = new IntersectionObserver((entries)=>{
+    for(const e of entries){ if(e.isIntersecting){ e.target.classList.add('show'); io.unobserve(e.target);} }
+  },{threshold:.12});
+  document.querySelectorAll('.reveal, .card, .links, .contact, .faq').forEach(el=>io.observe(el));
+
+  const hero = document.getElementById('heroContent');
+  let lastPaint = 0;
+  window.addEventListener('scroll', ()=>{
+    const now = performance.now();
+    if (now - lastPaint < 16) return;
+    lastPaint = now;
+    const y = window.scrollY;
+    hero.style.transform = `translateY(${y * -0.09}px)`;
+  }, {passive:true});
+
+  function attachHoverXY(sel){
+    document.querySelectorAll(sel).forEach(el=>{
+      el.addEventListener('pointermove', e=>{
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--x', (e.clientX - r.left) + 'px');
+        el.style.setProperty('--y', (e.clientY - r.top) + 'px');
+      });
+    });
+  }
+  attachHoverXY('.link, .hoverable, .skill-card');
+
+  document.querySelectorAll('.qa').forEach(q=>{
+    q.querySelector('.q').addEventListener('click', ()=> q.classList.toggle('open'));
+  });
+
+  const nav = document.getElementById('nav');
+  let lastY = window.scrollY;
+  let hideAccum = 0;
+  let showAccum = 0;
+  const HIDE_THRESHOLD = 24;
+  const SHOW_THRESHOLD = 12;
+  const PIN_DISTANCE = 80;
+  let ticking = false;
+
+  function onScrollStable(){
+    const y = window.scrollY;
+    const dy = y - lastY;
+
+    if (Math.abs(dy) < 1) { lastY = y; return; }
+    if (y < PIN_DISTANCE) {
+      nav.classList.remove('hidden'); nav.classList.add('reveal');
+      hideAccum = showAccum = 0;
+      lastY = y; return;
+    }
+
+    if (dy > 0) { // scrolling down
+      hideAccum += dy; showAccum = 0;
+      if (hideAccum > HIDE_THRESHOLD) {
+        nav.classList.add('hidden'); nav.classList.remove('reveal');
+        hideAccum = 0;
+      }
+    } else { // scrolling up
+      showAccum += -dy; hideAccum = 0;
+      if (showAccum > SHOW_THRESHOLD) {
+        nav.classList.remove('hidden'); nav.classList.add('reveal');
+        showAccum = 0;
+      }
+    }
+    lastY = y;
+  }
+
+  window.addEventListener('scroll', ()=>{
+    if (!ticking) {
+      window.requestAnimationFrame(()=>{ onScrollStable(); ticking = false; });
+      ticking = true;
+    }
+  }, {passive:true});
+
+  // Top-edge reveal: drop header when mouse hits top edge
+  let edgeArmed = false;
+  document.addEventListener('mousemove', (e)=>{
+    if (e.clientY <= 6) {
+      nav.classList.remove('hidden'); nav.classList.add('reveal');
+      edgeArmed = true;
+    } else if (edgeArmed && e.clientY > 50 && window.scrollY > PIN_DISTANCE) {
+      edgeArmed = false;
+    }
+  });
+
+  const HEADER_HEIGHT = 64;
+  function smoothScrollTo(targetY, duration=520){
+    const startY = window.scrollY;
+    const delta = targetY - startY;
+    const t0 = performance.now();
+    const ease = t=> t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; // cubic easeInOut
+    function step(t){
+      const p = Math.min(1, (t - t0) / duration);
+      const e = ease(p);
+      window.scrollTo(0, Math.round(startY + delta * e));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function scrollToHash(hash){
+    const el = document.querySelector(hash);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const y = Math.max(0, window.scrollY + rect.top - HEADER_HEIGHT - 8);
+    smoothScrollTo(y);
+  }
+  document.querySelectorAll('.menu a[href^="#"], .btn[href^="#"]').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const href = a.getAttribute('href');
+      if (!href || href === '#') return;
+      e.preventDefault();
+      scrollToHash(href);
+      nav.classList.remove('hidden'); nav.classList.add('reveal');
+    });
+  });
+  window.addEventListener('load', ()=>{
+    const hash = decodeURIComponent(location.hash||'');
+    if (hash.startsWith('#')) setTimeout(()=>scrollToHash(hash), 50);
+  });
+
+  function sendMessage(e){
+    e.preventDefault();
+    const name = encodeURIComponent(document.getElementById('name').value);
+    const email = encodeURIComponent(document.getElementById('email').value);
+    const message = encodeURIComponent(document.getElementById('message').value);
+    const subject = encodeURIComponent('Contact · '+decodeURIComponent(name));
+    const body = `From: ${decodeURIComponent(name)} (%3C${decodeURIComponent(email)}%3E)%0D%0A%0D%0A${message}`;
+    location.href = `mailto:contact@ogcraftnet.vip?subject=${subject}&body=${body}`;
+    const status = document.getElementById('status');
+    if (status) status.textContent = 'Opening your email client…';
+  }
+  window.sendMessage = sendMessage;
+
+  const skillsGrid = document.getElementById('skillsGrid');
+  const filterBtns = document.querySelectorAll('.skills-controls .filter');
+  const cards = () => Array.from(skillsGrid.querySelectorAll('.skill-card'));
+
+  filterBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filterBtns.forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+      const f = btn.dataset.filter || 'all';
+      cards().forEach(c=>{
+        const cats = (c.dataset.cat||'').split(/\s+/);
+        const show = f==='all' || cats.includes(f);
+        c.classList.toggle('is-hidden', !show);
+      });
+    });
+  });
+</script>
+</body>
+</html>
